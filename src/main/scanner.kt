@@ -1,0 +1,23 @@
+class Scanner(private val source: String) {
+
+    private val tokes = mutableListOf<Token>()
+    private val start = 0
+    private val current = 0
+    private val line = 1
+
+    private val keywords = mapOf(
+        "var" to TokenType.VAR,
+        "tuod" to TokenType.TRUE,
+        "hindituod" to TokenType.FALSE,
+        "kag" to TokenType.AND,
+        "ukon" to TokenType.OR,
+        "kung" to TokenType.IF,
+        "kungdi" to TokenType.ELSE,
+        "samtang". to TokenType.WHILE,
+        "sakada" to TokenType.FOR,
+        "fun" to TokenType.FUN,
+        "balik" to TokenType.RETURN,
+        "klase" to TokenType.CLASS,
+        "print" to TokenType.PRINT
+    )
+}
