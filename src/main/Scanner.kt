@@ -1,6 +1,6 @@
 class Scanner(private val source: String) {
 
-    private val tokes = mutableListOf<Token>()
+    private val tokens = mutableListOf<Token>()
     private var start = 0
     private var current = 0
     private var line = 1
@@ -12,14 +12,15 @@ class Scanner(private val source: String) {
         "kag" to TokenType.AND,
         "ukon" to TokenType.OR,
         "kung" to TokenType.IF,
-        "kungdi" to TokenType.ELSE,
-        "samtang". to TokenType.WHILE,
+        "iban" to TokenType.ELSE,
+        "samtang" to TokenType.WHILE,
         "sakada" to TokenType.FOR,
         "fun" to TokenType.FUN,
         "balik" to TokenType.RETURN,
         "klase" to TokenType.CLASS,
         "print" to TokenType.PRINT
     )
+
     fun scanTokens(): List<Token> {
         while (!isAtEnd()) {
             start = current
@@ -61,7 +62,9 @@ class Scanner(private val source: String) {
             }
 
             ' ', '\r', '\t' -> { /* ignore whitespace */ }
-            '\n' -> line++
+            '\n' -> {
+                    line++
+            }
 
             '"' -> string()
 
@@ -74,6 +77,7 @@ class Scanner(private val source: String) {
             }
         }
     }
+
     private fun blockComment() {
         while (!isAtEnd()) {
             if (peek() == '\n') line++
@@ -84,7 +88,7 @@ class Scanner(private val source: String) {
             }
             advance()
         }
-        // Unterminated comment: silently end; keep scanning
+       errorAtChar("Unterminated block comment")
     }
 
     private fun identifier() {
