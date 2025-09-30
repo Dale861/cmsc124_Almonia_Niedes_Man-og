@@ -18,7 +18,8 @@ class Scanner(private val source: String) {
         "fun" to TokenType.FUN,
         "balik" to TokenType.RETURN,
         "klase" to TokenType.CLASS,
-        "print" to TokenType.PRINT
+        "print" to TokenType.PRINT,
+        "null" to TokenType.NULL
     )
 
     fun scanTokens(): List<Token> {
@@ -42,7 +43,8 @@ class Scanner(private val source: String) {
             '-' -> addToken(TokenType.MINUS)
             '+' -> addToken(TokenType.PLUS)
             ';' -> addToken(TokenType.SEMICOLON)
-            '*' -> addToken(TokenType.STAR)
+            '*' -> addToken(TokenType.MULTIPLY)
+            '%' -> addToken(TokenType.MODULO)
 
             '!' -> addToken(if (match('=')) TokenType.BANG_EQUAL else TokenType.BANG)
             '=' -> addToken(if (match('=')) TokenType.EQUAL_EQUAL else TokenType.EQUAL)
@@ -57,7 +59,7 @@ class Scanner(private val source: String) {
                     match('*') -> { // block comment
                         blockComment()
                     }
-                    else -> addToken(TokenType.SLASH)
+                    else -> addToken(TokenType.DIVIDE)
                 }
             }
 
