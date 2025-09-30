@@ -7,7 +7,6 @@ fun main() {
         val scanner = Scanner(line)
         val tokens = scanner.scanTokens()
 
-        for(i in tokens)
-            println(i)
+        for(i in tokens) println(i)
     }
 }
