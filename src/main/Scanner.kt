@@ -24,6 +24,7 @@ class Scanner(private val source: String) {
     fun scanTokens(): List<Token> {
         while (!isAtEnd()) {
             start = current
+            start = current // occurs everytime a lexeme and extracted
             scanToken()
         }
         tokens.add(Token(TokenType.EOF, "", null, line))
