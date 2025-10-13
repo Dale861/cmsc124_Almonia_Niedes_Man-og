@@ -5,26 +5,9 @@ class Scanner(private val source: String) {
     private var current = 0
     private var line = 1
 
-    private val keywords = mapOf(
-        "var" to TokenType.VAR,
-        "tuod" to TokenType.TRUE,
-        "hindituod" to TokenType.FALSE,
-        "kag" to TokenType.AND,
-        "ukon" to TokenType.OR,
-        "kung" to TokenType.IF,
-        "iban" to TokenType.ELSE,
-        "samtang" to TokenType.WHILE,
-        "sakada" to TokenType.FOR,
-        "fun" to TokenType.FUN,
-        "balik" to TokenType.RETURN,
-        "klase" to TokenType.CLASS,
-        "print" to TokenType.PRINT,
-        "null" to TokenType.NULL
-    )
-
     fun scanTokens(): List<Token> {
         while (!isAtEnd()) {
-            start = current
+            start = current // occurs every time a lexeme is extracted
             scanToken()
         }
         tokens.add(Token(TokenType.EOF, "", null, line))
@@ -64,9 +47,7 @@ class Scanner(private val source: String) {
             }
 
             ' ', '\r', '\t' -> { /* ignore whitespace */ }
-            '\n' -> {
-                    line++
-            }
+            '\n' -> line++
 
             '"' -> string()
 
@@ -90,13 +71,13 @@ class Scanner(private val source: String) {
             }
             advance()
         }
-       errorAtChar("Unterminated block comment")
+        errorAtChar("Unterminated block comment")
     }
 
     private fun identifier() {
         while (isAlphaNumeric(peek())) advance()
         val text = source.substring(start, current)
-        val type = keywords[text] ?: TokenType.IDENTIFIER
+        val type = Keywords.map[text] ?: TokenType.IDENTIFIER
         addToken(type)
     }
 
