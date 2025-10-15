@@ -1,3 +1,5 @@
+package  main
+
 object Keywords {
     val map = mapOf(
         "var" to TokenType.VAR,
