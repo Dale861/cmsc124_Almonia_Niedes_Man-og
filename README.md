@@ -113,6 +113,32 @@ The following are reserved words in LSL and cannot be used as identifiers:
 
 ## Sample Code
 
+champion Jinx {
+    onAbilityCast(Q) {
+        if (enemyInRange and getHealth < 50) {
+        cast Q
+        useItem "Ignite"
+        }
+    }
+    onHealthBelow(30) {
+        combo {
+        useItem "Heal"
+        moveTo base
+        ping "retreat"
+        }
+    }
+    onDeath {
+        ping "danger"
+        }
+    onEnemyApproach {
+        if (hasBuff "Speed") {
+            moveTo river
+        } else {
+            placeWard triBush
+        }
+    }
+}
+
 ## Design Rationale
 
 **Game-Centric Keywords**: LSL uses League of Legends terminology (`cast`, `ping`, `combo`, `ward`) to make code intuitive for competitive players.
