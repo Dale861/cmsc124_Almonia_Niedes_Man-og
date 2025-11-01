@@ -1,31 +1,52 @@
-# Man-og Language
-**Creator:** Dale Louize Almonster, Stefan Niedesmonster
+# LSL - League of Legends Script Language
+
+**Creators:** Dale Almonster & Stefan Niedesmonster
 
 ---
 
 ## Language Overview
-TuodLang is a simple, experimental programming language designed to practice compiler construction concepts, specifically lexical scanning and tokenization. Its main characteristics are:
-- C-like syntax with custom keywords (some in Filipino, e.g., `tuod`).
-- Emphasis on clarity for beginners, with readable operators and familiar control structures.
-- Supports identifiers, numbers, strings, comments, and common operators.
+
+LSL is an experimental domain-specific programming language designed to script League of Legends champion behavior and game mechanics. Its main characteristics are:
+
+- Game-centric syntax with LoL-specific keywords (e.g., `cast`, `ping`, `onAbilityCast`).
+- Emphasis on clarity for competitive gaming strategy with readable operators and event-driven architecture.
+- Supports champion declarations, event handlers, combos, and map awareness queries.
 - Case-sensitive and whitespace-insensitive (except as token delimiters).
 
 ---
 
 ## Keywords
-The following are reserved words in TuodLang and cannot be used as identifiers:
 
-| Keyword     | Purpose                          |
-|-------------|----------------------------------|
-| `var`       | Declares a variable              |
-| `tuod`      | Boolean literal for `true`       |
-| `hindituod` | Boolean literal for `false`      |
-| `kung`      | Conditional statement (`if`)     |
-| `iban`      | Else / otherwise branch          |
-| `samtang`   | Looping construct (`while`)      |
-| `para`      | Looping construct (`for`)        |
-| `balik`     | Return statement                 |
-| `print`     | Output text to console           |
+The following are reserved words in LSL and cannot be used as identifiers:
+
+| Keyword | Purpose |
+|---------|---------|
+| `champion` | Declares a champion script |
+| `onAbilityCast` | Event triggered when ability is cast |
+| `onAttack` | Event triggered on basic attack |
+| `onDeath` | Event triggered on champion death |
+| `onHealthBelow` | Event triggered when health below threshold |
+| `onManaBelow` | Event triggered when mana below threshold |
+| `onEnemyApproach` | Event triggered when enemy approaches |
+| `onAllyNearby` | Event triggered when ally is nearby |
+| `onCooldownReady` | Event triggered when cooldown resets |
+| `cast` | Cast an ability |
+| `useItem` | Use an item from inventory |
+| `attack` | Perform basic attack |
+| `moveTo` | Move to location |
+| `placeWard` | Place a ward at location |
+| `ping` | Send ping to teammates |
+| `recall` | Return to base |
+| `teleport` | Teleport to location |
+| `if` | Conditional statement |
+| `else` | Else / otherwise branch |
+| `while` | Looping construct |
+| `combo` | Group multiple actions |
+| `and` | Logical AND |
+| `or` | Logical OR |
+| `not` | Logical NOT |
+| `true` | Boolean literal for true |
+| `false` | Boolean literal for false |
 
 ---
 
@@ -46,9 +67,9 @@ The following are reserved words in TuodLang and cannot be used as identifiers:
 - `>=` (greater than or equal to)
 
 **Logical:**
-- `&&` (logical AND)
-- `||` (logical OR)
-- `!` (logical NOT)
+- `and` (logical AND)
+- `or` (logical OR)
+- `not` (logical NOT)
 
 **Assignment:**
 - `=` (assign value)
@@ -57,21 +78,24 @@ The following are reserved words in TuodLang and cannot be used as identifiers:
 
 ## Literals
 
-- **Numbers**: Integers (`123`), floating point numbers (`12.34`). Invalid formats like `12.34.56` cause an error.
-- **Strings**: Enclosed in double quotes (`"Hello World"`). Unterminated strings cause an error.
-- **Booleans**: `tuod` (true), `hindituod` (false).
+- **Numbers**: Integers (`600`), floating point numbers (`30.5`). Invalid formats like `12.34.56` cause an error.
+- **Strings**: Enclosed in double quotes (`"Heal"`, `"Follow"`). Unterminated strings cause an error.
+- **Booleans**: `true`, `false`.
+- **Map Locations**: `dragonPit`, `baronPit`, `topLane`, `midLane`, `botLane`, `triBush`, `river`, `base`.
 
 ---
 
 ## Identifiers
+
 - Must begin with a letter (a–z, A–Z).
 - May contain letters and digits (a–z, A–Z, 0–9).
 - Cannot match reserved keywords.
-- Case-sensitive (`Var` and `var` are different).
+- Case-sensitive (`Champion` and `champion` are different).
 
 ---
 
 ## Comments
+
 - **Line comments**: Start with `//` and continue until the end of the line.
 - **Block comments**: Enclosed by `/* ... */`.
 - Nested block comments are **not** supported. Unterminated block comments cause an error.
@@ -79,8 +103,9 @@ The following are reserved words in TuodLang and cannot be used as identifiers:
 ---
 
 ## Syntax Style
+
 - Whitespace is ignored except as a separator between tokens.
-- Statements are terminated by a newline or semicolon.
+- Statements can span multiple lines without terminators.
 - Blocks are delimited by `{ ... }`.
 - Grouping for expressions uses parentheses `( ... )`.
 
@@ -88,36 +113,20 @@ The following are reserved words in TuodLang and cannot be used as identifiers:
 
 ## Sample Code
 
-```man-og language
-var x = 10
-var y = 20
-
-kung (x < y) {
-    print("x is less than y")
-} iban {
-    print("x is greater or equal to y")
-}
-
-// Loop example
-para (var i = 0; i < 5; i = i + 1) {
-    print("Count: " + i)
-}
-
-/* Block comment
-   This will be ignored
-*/
-balik tuod
-```
 ## Design Rationale
 
-Design Rationale
+**Game-Centric Keywords**: LSL uses League of Legends terminology (`cast`, `ping`, `combo`, `ward`) to make code intuitive for competitive players.
 
-Custom Keywords: Blending English (var, print) and Filipino (tuod, kung, iban) makes the language approachable yet unique.
+**Event-Driven Architecture**: Instead of imperative programming, LSL uses event handlers (`onAttack`, `onHealthBelow`) that naturally mirror how champions behave in-game.
 
-C-like Syntax: Easier to understand since many programmers are already familiar with braces, operators, and semicolons.
+**Familiar Syntax**: C-like braces, operators, and control flow make LSL accessible while keeping it unique to gaming.
 
-Error Handling: Scanner explicitly checks for unterminated strings and block comments to prevent runtime crashes.
+**Domain-Specific Functions**: Built-in functions like `enemyInRange()` and `placeWard()` eliminate verbose game state queries.
 
-Simplicity First: Only basic constructs (variables, conditionals, loops, functions) to keep the language minimal and easy to extend.
+**Error Handling**: Scanner explicitly checks for unterminated strings and block comments to prevent runtime crashes.
 
-Case Sensitivity: Allows flexibility and avoids ambiguity with keywords.
+**Simplicity First**: Only basic constructs (champion events, conditions, combos) keep the language minimal and easy to extend.
+
+**Case Sensitivity**: Allows flexibility and avoids ambiguity with keywords.
+
+---
