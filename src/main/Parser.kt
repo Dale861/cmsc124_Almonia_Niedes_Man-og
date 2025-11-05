@@ -7,7 +7,11 @@ class Parser(private val tokens: List<Token>) {
 
     fun parse(): Expr? {
         return try {
-            champion()
+            if (check(TokenType.CHAMPION)) {
+                champion()
+            } else {
+                expression()
+            }
         } catch (e: ParseError) {
             null
         }
