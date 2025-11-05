@@ -17,6 +17,15 @@ class Parser(private val tokens: List<Token>) {
         }
     }
 
+    fun parseStatements(): List<Stmt> {
+        val statements = mutableListOf<Stmt>()
+        while (!isAtEnd()) {
+            statements.add(statement()) // or expressionStatement()
+        }
+        return statements
+    }
+
+
     // champion ::= "champion" IDENTIFIER "{" eventHandler* "}"
     private fun champion(): Expr {
         consume(TokenType.CHAMPION, "Expect 'champion' keyword.")
