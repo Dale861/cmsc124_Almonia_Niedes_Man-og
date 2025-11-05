@@ -13,10 +13,11 @@ fun main() {
     println()
 
     val buffer = mutableListOf<String>()
+    val evaluator = Evaluator()
 
     while (true) {
         print("LSL> ")
-        val line = readLine() ?: break
+        val line = readlnOrNull() ?: break
         val trimmed = line.trim().lowercase()
 
         when {
@@ -54,23 +55,19 @@ fun main() {
                         val scanner = Scanner(source)
                         val tokens = scanner.scanTokens()
 
-                        println("Tokens generated: ${tokens.size}")
-
                         // Parser phase
                         val parser = Parser(tokens)
                         val expression = parser.parse()
 
                         if (expression != null) {
-                            // AST Printer phase - printing happens in constructor
-                            println("\nAST Output:")
-                            AstPrinter(expression)
+                            // Evaluate instead of printing AST
+                            val result = evaluator.evaluate(expression)
+                            println("Result: $result")
                         } else {
                             println("Parse error occurred.")
                         }
-
-                        println("---")
-                        println("Script execution completed!")
-
+                    } catch (e: Evaluator.RuntimeError) {
+                        println(e.message)
                     } catch (e: Exception) {
                         println("Error: ${e.message}")
                         e.printStackTrace()
