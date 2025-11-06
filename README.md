@@ -111,9 +111,51 @@ The following are reserved words in LSL and cannot be used as identifiers:
 
 ---
 
-## Sample Code
+## Grammar
+```LSL
+statement ::= championStmt
+            | ifStmt
+            | whileStmt
+            | comboStmt
+            | block
+            | expressionStmt
 
-champion Jinx {
+championStmt ::= "champion" IDENTIFIER "{" eventHandler* "}"
+
+eventHandler ::= eventType ( "(" params? ")" )? "{" statement* "}"
+
+ifStmt ::= "if" "(" expression ")" "{" statement* "}" ( "else" "{" statement* "}" )?
+
+whileStmt ::= "while" "(" expression ")" "{" statement* "}"
+
+comboStmt ::= "combo" "{" statement* "}"
+
+block ::= "{" statement* "}"
+
+expressionStmt ::= expression
+
+expression      ::= logicOr
+logicOr         ::= logicAnd ( "or" logicAnd )*
+logicAnd        ::= equality ( "and" equality )*
+equality        ::= comparison ( "==" comparison )*
+comparison      ::= term ( ("<" | "<=" | ">" | ">=") term )*
+term            ::= factor ( ("+" | "-") factor )*
+factor          ::= unary ( ("*" | "/") unary )*
+unary           ::= ( "not" ) unary | call
+call            ::= primary ( "(" arguments? ")" )*
+primary         ::= "true"
+| "false"
+| NUMBER
+| STRING
+| IDENTIFIER
+| gameKeyword
+| "(" expression ")"
+
+```
+
+## Sample Code
+```LSL
+champion Jinx { 
     onAbilityCast(Q) {
         if (enemyInRange and getHealth < 50) {
         cast Q
@@ -138,6 +180,7 @@ champion Jinx {
         }
     }
 }
+```
 
 ## Design Rationale
 

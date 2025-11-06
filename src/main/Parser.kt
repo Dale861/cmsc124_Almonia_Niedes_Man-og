@@ -5,23 +5,23 @@ class Parser(private val tokens: List<Token>) {
 
     class ParseError : RuntimeException()
 
-    fun parse(): List<Expr> {
-        return try {
-            val expressions = mutableListOf<Expr>()
-            while (!isAtEnd()) {
-                try {
-                    if (check(TokenType.CHAMPION)) {
-                        expressions.add(champion())
-                    } else if (!check(TokenType.EOF)) {
-                        expressions.add(expression())
-                    }
-                } catch (e: ParseError) {
-                    synchronize()
-                }
-            }
-            expressions
-        } catch (e: ParseError) {
-            emptyList()
+    fun parseStatements(): List<Stmt> {
+        val statements = mutableListOf<Stmt>()
+        while (!isAtEnd()) {
+            statements.add(statement()) // or expressionStatement()
+        }
+        return statements
+    }
+
+    // statement ::= championStmt | ifStmt | whileStmt | comboStmt | exprStmt | block
+    private fun statement(): Stmt {
+        return when {
+            match(TokenType.CHAMPION) -> championStatement()
+            match(TokenType.IF) -> ifStatement()
+            match(TokenType.WHILE) -> whileStatement()
+            match(TokenType.COMBO) -> comboStatement()
+            match(TokenType.LEFT_BRACE) -> Stmt.Block(block())
+            else -> expressionStatement()
         }
     }
 
