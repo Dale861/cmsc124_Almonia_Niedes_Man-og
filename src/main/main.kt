@@ -59,10 +59,10 @@ fun main() {
                         val parser = Parser(tokens)
                         val expression = parser.parse()
 
-                        if (expression != null) {
                             // Evaluate instead of printing AST
-                            val result = evaluator.evaluate(expression)
-                            println("Result: $result")
+                            if (expression != null) {
+                                val result = evaluator.evaluate(expression)
+                                println(evaluator.stringify(result))
                         } else {
                             println("Parse error occurred.")
                         }
