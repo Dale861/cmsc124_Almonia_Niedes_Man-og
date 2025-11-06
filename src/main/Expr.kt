@@ -31,6 +31,9 @@ sealed class Stmt {
     // If statement
     data class If(val condition: Expr, val thenBranch: List<Stmt>, val elseBranch: List<Stmt>?) : Stmt()
 
+    // Champion statement
+    data class Champion(val name: Token, val events: List<Expr.EventHandler>) : Stmt()
+
     // While loop
     data class While(val condition: Expr, val body: List<Stmt>) : Stmt()
 

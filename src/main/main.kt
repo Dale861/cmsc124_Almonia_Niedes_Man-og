@@ -51,21 +51,25 @@ fun main() {
                     println("---")
 
                     try {
-                        // Scanner phase
                         val scanner = Scanner(source)
                         val tokens = scanner.scanTokens()
 
-                        // Parser phase
                         val parser = Parser(tokens)
-                        val expression = parser.parse()
+                        val stmts = parser.parseStatements()
 
-                            // Evaluate instead of printing AST
-                            if (expression != null) {
-                                val result = evaluator.evaluate(expression)
-                                println(evaluator.stringify(result))
-                        } else {
-                            println("Parse error occurred.")
+                        for (stmt in stmts) {
+                            val result = when (stmt) {
+                                is Stmt.Expression -> evaluator.evaluate(stmt.expression)
+                                else -> {
+                                    evaluator.execute(stmt)
+                                    null
+                                }
+                            }
+                            if (result != null) {
+                                println("Result: $result")
+                            }
                         }
+
                     } catch (e: Evaluator.RuntimeError) {
                         println(e.message)
                     } catch (e: Exception) {
