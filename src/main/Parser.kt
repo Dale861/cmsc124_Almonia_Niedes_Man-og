@@ -5,15 +5,6 @@ class Parser(private val tokens: List<Token>) {
 
     class ParseError : RuntimeException()
 
-    // Changed to parse a list of statements instead of single expression
-    fun parse(): List<Stmt> {
-        val statements = mutableListOf<Stmt>()
-        while (!isAtEnd()) {
-            statements.add(statement())
-        }
-        return statements
-    }
-
     fun parseStatements(): List<Stmt> {
         val statements = mutableListOf<Stmt>()
         while (!isAtEnd()) {
