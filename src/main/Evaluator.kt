@@ -2,6 +2,8 @@ package main
 
 class Evaluator {
 
+    private val champions = mutableMapOf<String, Stmt.Champion>()
+
     class RuntimeError(token: Token, message: String) :
         RuntimeException("[Line ${token.line}] Runtime Error at '${token.lexeme}': $message")
 
@@ -100,6 +102,8 @@ class Evaluator {
         return a == b
     }
 
+    fun getChampion(name: String): Stmt.Champion? = champions[name]
+
     fun execute(stmt: Stmt) {
         when (stmt) {
             is Stmt.Expression -> evaluate(stmt.expression)
@@ -125,6 +129,30 @@ class Evaluator {
                 // Execute combo block - sequence of actions
                 for (action in stmt.actions) execute(action)
             }
+            is Stmt.Champion -> {
+                val championName = stmt.name.lexeme
+                champions[championName] = stmt
+                println("Champion registered: $championName")
+                // Could also initialize any state here as needed
+            }
         }
+    }
+
+    fun runChampionEvent(championName: String, eventType: String) {
+        val champion = champions[championName]
+        if (champion != null) {
+            for (event in champion.events) {
+                if (event.eventType.lexeme == eventType) {
+                    println("Running ${eventType} for ${championName}")
+                    for (stmt in event.body) {
+                        execute(stmt)
+                    }
+                }
+            }
+        }
+    }
+
+    fun triggerEvent(championName: String, eventType: String) {
+        runChampionEvent(championName, eventType)
     }
 }

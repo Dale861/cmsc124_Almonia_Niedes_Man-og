@@ -49,6 +49,7 @@ class AstPrinter(expr: Expr) {
             is Stmt.Combo -> "(combo ${stmt.actions.joinToString(" ") { printStmt(it) }})"
             is Stmt.Expression -> print(stmt.expression)
             is Stmt.Block -> "(block ${stmt.statements.joinToString(" ") { printStmt(it) }})"
+            is Stmt.Champion -> ""
         }
     }
 }
