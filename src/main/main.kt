@@ -55,14 +55,14 @@ fun main() {
                         val tokens = scanner.scanTokens()
 
                         val parser = Parser(tokens)
-                        val expressions = parser.parse()
+                        val statements = parser.parseStatements()
 
-                        if (expressions.isNotEmpty()) {
+                        if (statements.isNotEmpty()) {
                             // Evaluate all expressions
-                            for (expr in expressions) {
-                                val result = evaluator.interpret(expr)
+                            for (stmt in statements) {
+                                val result = evaluator.evaluateStatement(stmt)
                                 // Print result for all non-champion expressions
-                                if (expr !is Expr.Champion && result != null) {
+                                if (stmt !is Stmt.Champion && result != null) {
                                     println("Result: $result")
                                 }
                             }

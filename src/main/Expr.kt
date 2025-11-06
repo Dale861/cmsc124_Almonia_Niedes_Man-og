@@ -1,8 +1,6 @@
 package main
 
 sealed class Expr {
-    // Champion declaration
-    data class Champion(val name: Token, val events: List<EventHandler>) : Expr()
 
     // Event handler (onAbilityCast, onHealthBelow, etc.)
     data class EventHandler(val eventType: Token, val params: List<Token>, val body: List<Stmt>) : Expr()

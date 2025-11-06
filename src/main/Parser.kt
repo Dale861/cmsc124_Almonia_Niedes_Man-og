@@ -26,18 +26,15 @@ class Parser(private val tokens: List<Token>) {
     }
 
     // champion ::= "champion" IDENTIFIER "{" eventHandler* "}"
-    private fun champion(): Expr {
-        consume(TokenType.CHAMPION, "Expect 'champion' keyword.")
+    private fun championStatement(): Stmt {
         val name = consume(TokenType.IDENTIFIER, "Expect champion name.")
         consume(TokenType.LEFT_BRACE, "Expect '{' after champion name.")
-
         val events = mutableListOf<Expr.EventHandler>()
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
             events.add(eventHandler())
         }
-
         consume(TokenType.RIGHT_BRACE, "Expect '}' after champion body.")
-        return Expr.Champion(name, events)
+        return Stmt.Champion(name, events)
     }
 
     // eventHandler ::= eventType ( "(" params? ")" )? "{" statement* "}"
@@ -65,17 +62,6 @@ class Parser(private val tokens: List<Token>) {
 
         consume(TokenType.RIGHT_BRACE, "Expect '}' after event body.")
         return Expr.EventHandler(eventType, params, body)
-    }
-
-    // statement ::= ifStmt | whileStmt | comboStmt | exprStmt | block
-    private fun statement(): Stmt {
-        return when {
-            match(TokenType.IF) -> ifStatement()
-            match(TokenType.WHILE) -> whileStatement()
-            match(TokenType.COMBO) -> comboStatement()
-            match(TokenType.LEFT_BRACE) -> Stmt.Block(block())
-            else -> expressionStatement()
-        }
     }
 
     private fun ifStatement(): Stmt {
@@ -311,16 +297,5 @@ class Parser(private val tokens: List<Token>) {
     private fun error(token: Token, message: String): ParseError {
         println("[Line ${token.line}] Error at '${token.lexeme}': $message")
         return ParseError()
-    }
-
-    private fun synchronize() {
-        advance()
-        while (!isAtEnd()) {
-            if (previous().type == TokenType.EOF) return
-            when (peek().type) {
-                TokenType.CHAMPION, TokenType.IF, TokenType.WHILE, TokenType.FOR -> return
-                else -> advance()
-            }
-        }
     }
 }

@@ -10,10 +10,6 @@ class AstPrinter(expr: Expr) {
     // Main print function for expressions
     private fun print(expr: Expr): String {
         return when (expr) {
-            is Expr.Champion -> {
-                val events = expr.events.joinToString(" ") { print(it) }
-                "(champion ${expr.name.lexeme} $events)"
-            }
             is Expr.EventHandler -> {
                 val params = expr.params.joinToString(" ") { it.lexeme }
                 val body = expr.body.joinToString(" ") { printStmt(it) }

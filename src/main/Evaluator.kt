@@ -4,18 +4,8 @@ class RuntimeError(message: String, val line: Int = 0) : RuntimeException(messag
 
 class Evaluator {
 
-    fun interpret(expr: Expr): Any? {
-        try {
-            return evaluate(expr)
-        } catch (e: RuntimeError) {
-            println("[Line ${e.line}] Runtime error: ${e.message}")
-            return null
-        }
-    }
-
     private fun evaluate(expr: Expr): Any? {
         return when (expr) {
-            is Expr.Champion -> evaluateChampion(expr)
             is Expr.EventHandler -> evaluateEventHandler(expr)
             is Expr.Call -> evaluateCall(expr)
             is Expr.Binary -> evaluateBinary(expr)
@@ -26,10 +16,12 @@ class Evaluator {
         }
     }
 
-    private fun evaluateChampion(champion: Expr.Champion): Any? {
-        println("Champion: ${champion.name.lexeme}")
-        champion.events.forEach { evaluate(it) }
-        return champion.name.lexeme
+    private fun evaluateChampionStatement(championStmt: Stmt.Champion): Any? {
+        println("Champion: ${championStmt.name.lexeme}")
+        championStmt.events.forEach { eventHandlerExpr ->
+            evaluate(eventHandlerExpr)   // event handlers are Expr
+        }
+        return null
     }
 
     private fun evaluateEventHandler(handler: Expr.EventHandler): Any? {
@@ -43,8 +35,9 @@ class Evaluator {
         return null
     }
 
-    private fun evaluateStatement(stmt: Stmt): Any? {
+    fun evaluateStatement(stmt: Stmt): Any? {
         return when (stmt) {
+            is Stmt.Champion -> evaluateChampionStatement(stmt)
             is Stmt.If -> evaluateIf(stmt)
             is Stmt.While -> evaluateWhile(stmt)
             is Stmt.Combo -> evaluateCombo(stmt)
