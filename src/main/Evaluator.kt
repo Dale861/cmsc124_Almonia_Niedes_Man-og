@@ -1,158 +1,184 @@
 package main
 
+class RuntimeError(message: String, val line: Int = 0) : RuntimeException(message)
+
 class Evaluator {
 
-    private val champions = mutableMapOf<String, Stmt.Champion>()
+    fun interpret(expr: Expr): Any? {
+        try {
+            return evaluate(expr)
+        } catch (e: RuntimeError) {
+            println("[Line ${e.line}] Runtime error: ${e.message}")
+            return null
+        }
+    }
 
-    class RuntimeError(token: Token, message: String) :
-        RuntimeException("[Line ${token.line}] Runtime Error at '${token.lexeme}': $message")
-
-    fun evaluate(expr: Expr): Any? {
+    private fun evaluate(expr: Expr): Any? {
         return when (expr) {
+            is Expr.Champion -> evaluateChampion(expr)
+            is Expr.EventHandler -> evaluateEventHandler(expr)
+            is Expr.Call -> evaluateCall(expr)
+            is Expr.Binary -> evaluateBinary(expr)
+            is Expr.Unary -> evaluateUnary(expr)
             is Expr.Literal -> expr.value
+            is Expr.Variable -> expr.name.lexeme
             is Expr.Grouping -> evaluate(expr.expression)
-            is Expr.Unary -> {
-                val right = evaluate(expr.right)
-                when (expr.operator.type) {
-                    TokenType.NOT -> !isTruthy(right)
-                    else -> throw RuntimeError(expr.operator, "Unsupported unary operator '${expr.operator.lexeme}'")
-                }
-            }
-            is Expr.Binary -> {
-                val left = evaluate(expr.left)
-                val right = evaluate(expr.right)
+        }
+    }
 
-                when (expr.operator.type) {
-                    TokenType.PLUS -> {
-                        if (left is Double && right is Double) {
-                            left + right
-                        } else throw RuntimeError(expr.operator, "Operands must be numbers for '+'.")
-                    }
-                    TokenType.MINUS -> {
-                        if (left is Double && right is Double) {
-                            left - right
-                        } else throw RuntimeError(expr.operator, "Operands must be numbers for '-'.")
-                    }
-                    TokenType.STAR -> {
-                        if (left is Double && right is Double) {
-                            left * right
-                        } else throw RuntimeError(expr.operator, "Operands must be numbers for '*'.")
-                    }
-                    TokenType.SLASH -> {
-                        if (left is Double && right is Double) {
-                            if (right == 0.0) throw RuntimeError(expr.operator, "Division by zero.")
-                            else left / right
-                        } else throw RuntimeError(expr.operator, "Operands must be numbers for '/'.")
-                    }
-                    TokenType.GREATER -> {
-                        if (left is Double && right is Double) {
-                            left > right
-                        } else throw RuntimeError(expr.operator, "Operands must be numbers for '>'.")
-                    }
-                    TokenType.GREATER_EQUAL -> {
-                        if (left is Double && right is Double) {
-                            left >= right
-                        } else throw RuntimeError(expr.operator, "Operands must be numbers for '>='.")
-                    }
-                    TokenType.LESS -> {
-                        if (left is Double && right is Double) {
-                            left < right
-                        } else throw RuntimeError(expr.operator, "Operands must be numbers for '<'.")
-                    }
-                    TokenType.LESS_EQUAL -> {
-                        if (left is Double && right is Double) {
-                            left <= right
-                        } else throw RuntimeError(expr.operator, "Operands must be numbers for '<='.")
-                    }
-                    TokenType.EQUAL_EQUAL -> isEqual(left, right)
-                    TokenType.AND -> isTruthy(left) && isTruthy(right)
-                    TokenType.OR -> isTruthy(left) || isTruthy(right)
-                    else -> throw RuntimeError(expr.operator, "Unsupported binary operator '${expr.operator.lexeme}'.")
-                }
-            }
-            is Expr.Variable -> {
-                // Variables and game-specific runtime queries would be handled here.
-                // For now, return variable name or simulate game environment queries as needed.
-                throw RuntimeError(expr.name, "Variable access not implemented yet.")
-            }
-            is Expr.Call -> {
-                // Handle function calls (cast, attack, useItem, etc.)
-                throw RuntimeError(expr.callee, "Function calls not implemented yet.")
-            }
-            is Expr.EventHandler -> {
-                // Event handlers execute the body statements.
-                throw RuntimeError(expr.eventType, "Event handler evaluation at top level not implemented.")
-            }
-            is Expr.Champion -> {
-                // Champion declaration - may register events or similar.
-                throw RuntimeError(expr.name, "Champion evaluation not implemented.")
+    private fun evaluateChampion(champion: Expr.Champion): Any? {
+        println("Champion: ${champion.name.lexeme}")
+        champion.events.forEach { evaluate(it) }
+        return champion.name.lexeme
+    }
+
+    private fun evaluateEventHandler(handler: Expr.EventHandler): Any? {
+        val eventName = handler.eventType.lexeme
+        val params = handler.params.joinToString(", ") { it.lexeme }
+        println("  Event: $eventName($params)")
+
+        handler.body.forEach { stmt ->
+            evaluateStatement(stmt)
+        }
+        return null
+    }
+
+    private fun evaluateStatement(stmt: Stmt): Any? {
+        return when (stmt) {
+            is Stmt.If -> evaluateIf(stmt)
+            is Stmt.While -> evaluateWhile(stmt)
+            is Stmt.Combo -> evaluateCombo(stmt)
+            is Stmt.Expression -> evaluate(stmt.expression)
+            is Stmt.Block -> {
+                stmt.statements.forEach { evaluateStatement(it) }
+                null
             }
         }
     }
 
-    private fun isTruthy(obj: Any?): Boolean {
-        if (obj == null) return false
-        if (obj is Boolean) return obj
+    private fun evaluateIf(ifStmt: Stmt.If): Any? {
+        val condition = evaluate(ifStmt.condition)
+        return if (isTruthy(condition)) {
+            ifStmt.thenBranch.forEach { evaluateStatement(it) }
+            null
+        } else if (ifStmt.elseBranch != null) {
+            ifStmt.elseBranch.forEach { evaluateStatement(it) }
+            null
+        } else {
+            null
+        }
+    }
+
+    private fun evaluateWhile(whileStmt: Stmt.While): Any? {
+        while (isTruthy(evaluate(whileStmt.condition))) {
+            whileStmt.body.forEach { evaluateStatement(it) }
+        }
+        return null
+    }
+
+    private fun evaluateCombo(combo: Stmt.Combo): Any? {
+        println("    Combo executing...")
+        combo.actions.forEach { evaluateStatement(it) }
+        return null
+    }
+
+    private fun evaluateCall(call: Expr.Call): Any? {
+        val function = call.callee.lexeme
+        val args = call.args.map { evaluate(it) }
+
+        println("    Calling: $function(${args.joinToString(", ")})")
+        return null
+    }
+
+    private fun evaluateBinary(expr: Expr.Binary): Any? {
+        val left = evaluate(expr.left)
+        val right = evaluate(expr.right)
+        val operator = expr.operator.lexeme
+
+        return when (operator) {
+            "+" -> {
+                when {
+                    left is Double && right is Double -> left + right
+                    left is String && right is String -> left + right
+                    left is Double && right is String -> left.toString() + right
+                    left is String && right is Double -> left + right.toString()
+                    else -> throw RuntimeError("Operands must be two numbers or two strings.", expr.operator.line)
+                }
+            }
+            "-" -> {
+                requireNumbers(left, right, expr.operator)
+                (left as Double) - (right as Double)
+            }
+            "*" -> {
+                requireNumbers(left, right, expr.operator)
+                (left as Double) * (right as Double)
+            }
+            "/" -> {
+                requireNumbers(left, right, expr.operator)
+                if (right == 0.0) {
+                    throw RuntimeError("Division by zero.", expr.operator.line)
+                }
+                (left as Double) / (right as Double)
+            }
+            ">" -> {
+                requireNumbers(left, right, expr.operator)
+                (left as Double) > (right as Double)
+            }
+            ">=" -> {
+                requireNumbers(left, right, expr.operator)
+                (left as Double) >= (right as Double)
+            }
+            "<" -> {
+                requireNumbers(left, right, expr.operator)
+                (left as Double) < (right as Double)
+            }
+            "<=" -> {
+                requireNumbers(left, right, expr.operator)
+                (left as Double) <= (right as Double)
+            }
+            "==" -> isEqual(left, right)
+            "!=" -> !isEqual(left, right)
+            "and" -> isTruthy(left) && isTruthy(right)
+            "or" -> isTruthy(left) || isTruthy(right)
+            else -> throw RuntimeError("Unknown operator: $operator", expr.operator.line)
+        }
+    }
+
+    private fun evaluateUnary(expr: Expr.Unary): Any? {
+        val right = evaluate(expr.right)
+        val operator = expr.operator.lexeme
+
+        return when (operator) {
+            "-" -> {
+                requireNumber(right, expr.operator)
+                -(right as Double)
+            }
+            "not" -> !isTruthy(right)
+            else -> throw RuntimeError("Unknown unary operator: $operator", expr.operator.line)
+        }
+    }
+
+    private fun isTruthy(value: Any?): Boolean {
+        if (value == null) return false
+        if (value is Boolean) return value
         return true
     }
 
     private fun isEqual(a: Any?, b: Any?): Boolean {
         if (a == null && b == null) return true
-        if (a == null) return false
+        if (a == null || b == null) return false
         return a == b
     }
 
-    fun getChampion(name: String): Stmt.Champion? = champions[name]
-
-    fun execute(stmt: Stmt) {
-        when (stmt) {
-            is Stmt.Expression -> evaluate(stmt.expression)
-            is Stmt.Block -> {
-                for (statement in stmt.statements) {
-                    execute(statement)
-                }
-            }
-            is Stmt.If -> {
-                val condition = evaluate(stmt.condition)
-                if (isTruthy(condition)) {
-                    for (s in stmt.thenBranch) execute(s)
-                } else {
-                    stmt.elseBranch?.forEach { execute(it) }
-                }
-            }
-            is Stmt.While -> {
-                while (isTruthy(evaluate(stmt.condition))) {
-                    for (s in stmt.body) execute(s)
-                }
-            }
-            is Stmt.Combo -> {
-                // Execute combo block - sequence of actions
-                for (action in stmt.actions) execute(action)
-            }
-            is Stmt.Champion -> {
-                val championName = stmt.name.lexeme
-                champions[championName] = stmt
-                println("Champion registered: $championName")
-                // Could also initialize any state here as needed
-            }
+    private fun requireNumber(value: Any?, token: Token) {
+        if (value !is Double) {
+            throw RuntimeError("Operand must be a number.", token.line)
         }
     }
 
-    fun runChampionEvent(championName: String, eventType: String) {
-        val champion = champions[championName]
-        if (champion != null) {
-            for (event in champion.events) {
-                if (event.eventType.lexeme == eventType) {
-                    println("Running ${eventType} for ${championName}")
-                    for (stmt in event.body) {
-                        execute(stmt)
-                    }
-                }
-            }
+    private fun requireNumbers(left: Any?, right: Any?, token: Token) {
+        if (left !is Double || right !is Double) {
+            throw RuntimeError("Operands must be numbers.", token.line)
         }
-    }
-
-    fun triggerEvent(championName: String, eventType: String) {
-        runChampionEvent(championName, eventType)
     }
 }

@@ -25,9 +25,10 @@ class Parser(private val tokens: List<Token>) {
         }
     }
 
-    // champion statement parsing returning Stmt.Champion
-    private fun championStatement(): Stmt.Champion {
-        val name = consume(TokenType.IDENTIFIER, "Expect champion name after 'champion' keyword.")
+    // champion ::= "champion" IDENTIFIER "{" eventHandler* "}"
+    private fun champion(): Expr {
+        consume(TokenType.CHAMPION, "Expect 'champion' keyword.")
+        val name = consume(TokenType.IDENTIFIER, "Expect champion name.")
         consume(TokenType.LEFT_BRACE, "Expect '{' after champion name.")
 
         val events = mutableListOf<Expr.EventHandler>()
@@ -36,7 +37,7 @@ class Parser(private val tokens: List<Token>) {
         }
 
         consume(TokenType.RIGHT_BRACE, "Expect '}' after champion body.")
-        return Stmt.Champion(name, events)
+        return Expr.Champion(name, events)
     }
 
     // eventHandler ::= eventType ( "(" params? ")" )? "{" statement* "}"
@@ -64,6 +65,17 @@ class Parser(private val tokens: List<Token>) {
 
         consume(TokenType.RIGHT_BRACE, "Expect '}' after event body.")
         return Expr.EventHandler(eventType, params, body)
+    }
+
+    // statement ::= ifStmt | whileStmt | comboStmt | exprStmt | block
+    private fun statement(): Stmt {
+        return when {
+            match(TokenType.IF) -> ifStatement()
+            match(TokenType.WHILE) -> whileStatement()
+            match(TokenType.COMBO) -> comboStatement()
+            match(TokenType.LEFT_BRACE) -> Stmt.Block(block())
+            else -> expressionStatement()
+        }
     }
 
     private fun ifStatement(): Stmt {
@@ -133,6 +145,7 @@ class Parser(private val tokens: List<Token>) {
     // expression ::= logic_or
     private fun expression(): Expr = logicOr()
 
+    // logic_or ::= logic_and ( "or" logic_and )*
     private fun logicOr(): Expr {
         var expr = logicAnd()
         while (match(TokenType.OR)) {
@@ -143,6 +156,7 @@ class Parser(private val tokens: List<Token>) {
         return expr
     }
 
+    // logic_and ::= equality ( "and" equality )*
     private fun logicAnd(): Expr {
         var expr = equality()
         while (match(TokenType.AND)) {
@@ -153,6 +167,7 @@ class Parser(private val tokens: List<Token>) {
         return expr
     }
 
+    // equality ::= comparison ( ( "==" ) comparison )*
     private fun equality(): Expr {
         var expr = comparison()
         while (match(TokenType.EQUAL_EQUAL)) {
@@ -163,16 +178,11 @@ class Parser(private val tokens: List<Token>) {
         return expr
     }
 
+    // comparison ::= term ( ( ">" | ">=" | "<" | "<=" ) term )*
     private fun comparison(): Expr {
         var expr = term()
-        while (
-            match(
-                TokenType.GREATER,
-                TokenType.GREATER_EQUAL,
-                TokenType.LESS,
-                TokenType.LESS_EQUAL
-            )
-        ) {
+        while (match(TokenType.GREATER, TokenType.GREATER_EQUAL,
+                TokenType.LESS, TokenType.LESS_EQUAL)) {
             val operator = previous()
             val right = term()
             expr = Expr.Binary(expr, operator, right)
@@ -180,6 +190,7 @@ class Parser(private val tokens: List<Token>) {
         return expr
     }
 
+    // term ::= factor ( ( "+" | "-" ) factor )*
     private fun term(): Expr {
         var expr = factor()
         while (match(TokenType.PLUS, TokenType.MINUS)) {
@@ -190,6 +201,7 @@ class Parser(private val tokens: List<Token>) {
         return expr
     }
 
+    // factor ::= unary ( ( "*" | "/" ) unary )*
     private fun factor(): Expr {
         var expr = unary()
         while (match(TokenType.STAR, TokenType.SLASH)) {
@@ -200,6 +212,7 @@ class Parser(private val tokens: List<Token>) {
         return expr
     }
 
+    // unary ::= ( "not" ) unary | call
     private fun unary(): Expr {
         if (match(TokenType.NOT)) {
             val operator = previous()
@@ -209,6 +222,7 @@ class Parser(private val tokens: List<Token>) {
         return call()
     }
 
+    // call ::= primary ( "(" arguments? ")" )?
     private fun call(): Expr {
         var expr = primary()
 
@@ -230,6 +244,7 @@ class Parser(private val tokens: List<Token>) {
         return expr
     }
 
+    // primary ::= NUMBER | STRING | "true" | "false" | IDENTIFIER | "(" expression ")"
     private fun primary(): Expr {
         if (match(TokenType.TRUE)) return Expr.Literal(true)
         if (match(TokenType.FALSE)) return Expr.Literal(false)
@@ -252,16 +267,14 @@ class Parser(private val tokens: List<Token>) {
     }
 
     private fun isGameKeyword(): Boolean {
-        return match(
-            TokenType.CAST, TokenType.USE_ITEM, TokenType.ATTACK,
+        return match(TokenType.CAST, TokenType.USE_ITEM, TokenType.ATTACK,
             TokenType.MOVE_TO, TokenType.PLACE_WARD, TokenType.PING,
             TokenType.RECALL, TokenType.TELEPORT, TokenType.ENEMY_IN_RANGE,
             TokenType.NEAREST_ENEMY, TokenType.ALLY_IN_RANGE, TokenType.HAS_BUFF,
             TokenType.ITEM_READY, TokenType.COOLDOWN_READY, TokenType.GET_HEALTH,
             TokenType.GET_MANA, TokenType.DRAGON_PIT, TokenType.BARON_PIT,
             TokenType.TOP_LANE, TokenType.MID_LANE, TokenType.BOT_LANE,
-            TokenType.TRI_BUSH, TokenType.RIVER, TokenType.BASE
-        )
+            TokenType.TRI_BUSH, TokenType.RIVER, TokenType.BASE)
     }
 
     private fun match(vararg types: TokenType): Boolean {
@@ -298,5 +311,16 @@ class Parser(private val tokens: List<Token>) {
     private fun error(token: Token, message: String): ParseError {
         println("[Line ${token.line}] Error at '${token.lexeme}': $message")
         return ParseError()
+    }
+
+    private fun synchronize() {
+        advance()
+        while (!isAtEnd()) {
+            if (previous().type == TokenType.EOF) return
+            when (peek().type) {
+                TokenType.CHAMPION, TokenType.IF, TokenType.WHILE, TokenType.FOR -> return
+                else -> advance()
+            }
+        }
     }
 }
